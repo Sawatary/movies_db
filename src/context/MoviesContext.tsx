@@ -23,7 +23,6 @@ const initState: MoviesStateType = {
   page: 1,
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const debouncedFunction = debounce(
   (_e: React.ChangeEvent<HTMLInputElement>) => {},
   1500,
