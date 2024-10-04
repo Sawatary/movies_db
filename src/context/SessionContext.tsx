@@ -1,109 +1,115 @@
-import {
-  createContext,
-  ReactElement,
-  useEffect,
-  useState,
-  useCallback,
-} from 'react'
+import { Component, createContext, ReactElement } from "react";
 
-import { createGuestSession, GuestSessionDataType } from '../api/movies'
+import { createGuestSession, GuestSessionDataType } from "../api/movies";
 
 type SessionProviderStateType = {
-  guestSessionData: GuestSessionDataType | null
-  ratedMovies: Map<string, number>
-}
+  guestSessionData: GuestSessionDataType | null;
+  ratedMovies: Map<string, number>;
+};
 
 type SessionContextType = {
-  guestSessionData: GuestSessionDataType | null
-  getRateById: (id: number) => number | undefined
-  setRateById: (id: number, rate: number) => void
-}
+  guestSessionData: GuestSessionDataType | null;
+  getRateById: (id: number) => number | undefined;
+  setRateById: (id: number, rate: number) => void;
+};
 
-export const SessionContext = createContext<SessionContextType>({
+const initState = {
   guestSessionData: null,
+  ratedMovies: new Map<string, number>(),
   getRateById: () => undefined,
   setRateById: () => {},
-})
+};
 
-type ChildrenType = { children: ReactElement | ReactElement[] | undefined }
+export const SessionContext = createContext<SessionContextType>(initState);
 
-const SessionProvider = ({ children }: ChildrenType) => {
-  const [state, setState] = useState<SessionProviderStateType>({
-    guestSessionData: null,
-    ratedMovies: new Map<string, number>(),
-  })
+type ChildrenType = { children: ReactElement | ReactElement[] | undefined };
 
-  useEffect(() => {
-    const storedGuestSessionData = sessionStorage.getItem('guestSessionData')
-    const storedRatedMovies = sessionStorage.getItem('ratedMovies')
+class SessionProvider extends Component<
+  ChildrenType,
+  SessionProviderStateType
+> {
+  constructor(props: ChildrenType) {
+    super(props);
 
-    if (storedGuestSessionData) {
-      setState((prev) => ({
-        ...prev,
-        guestSessionData: JSON.parse(
-          storedGuestSessionData
-        ) as GuestSessionDataType,
-      }))
+    this.state = initState;
+  }
+
+  componentDidMount() {
+    if (sessionStorage.length) {
+      const guestSessionData = sessionStorage.getItem("guestSessionData");
+      const ratedMovies = sessionStorage.getItem("ratedMovies");
+
+      if (guestSessionData) {
+        this.setState(() => ({
+          guestSessionData: JSON.parse(
+            guestSessionData,
+          ) as GuestSessionDataType,
+        }));
+      }
+      if (ratedMovies) {
+        this.setState(() => ({
+          ratedMovies: new Map<string, number>(
+            Object.entries(
+              JSON.parse(ratedMovies) as ArrayLike<number>,
+            ) as Iterable<readonly [string, number]>,
+          ),
+        }));
+      }
+      if (guestSessionData) return;
     }
 
-    if (storedRatedMovies) {
-      setState((prev) => ({
-        ...prev,
-        ratedMovies: new Map<string, number>(
-          Object.entries(JSON.parse(storedRatedMovies))
-        ),
-      }))
-    }
+    createGuestSession()
+      .then((result) => {
+        this.setState(() => ({
+          guestSessionData: result,
+        }));
+        sessionStorage.setItem("guestSessionData", JSON.stringify(result));
+      })
+      .catch((err) => {
+        throw new Error(`GUEST ${String(err)}`);
+      });
+  }
 
-    if (!storedGuestSessionData) {
-      createGuestSession()
-        .then((result) => {
-          setState((prev) => ({
-            ...prev,
-            guestSessionData: result,
-          }))
-          sessionStorage.setItem('guestSessionData', JSON.stringify(result))
-        })
-        .catch((err) => {
-          throw new Error(`GUEST ${String(err)}`)
-        })
-    }
-  }, [])
+  componentDidUpdate(): void {
+    const { ratedMovies } = this.state;
 
-  useEffect(() => {
-    if (state.ratedMovies.size) {
-      sessionStorage.setItem(
-        'ratedMovies',
-        JSON.stringify(Object.fromEntries(state.ratedMovies))
-      )
-    }
-  }, [state.ratedMovies])
+    sessionStorage.setItem(
+      "ratedMovies",
+      JSON.stringify(Object.fromEntries(ratedMovies)),
+    );
+  }
 
-  const getRateById = useCallback(
-    (id: number) => state.ratedMovies.get(`${id}`),
-    [state.ratedMovies]
-  )
+  getRateById = (id: number) => {
+    const { ratedMovies } = this.state;
+    return ratedMovies.get(`${id}`);
+  };
 
-  const setRateById = useCallback((id: number, rate: number) => {
-    setState((prev) => {
-      const updatedMovies = new Map(prev.ratedMovies)
-      updatedMovies.set(`${id}`, rate)
-      return { ...prev, ratedMovies: updatedMovies }
-    })
-  }, [])
+  setRateById = (id: number, rate: number) => {
+    const { ratedMovies } = this.state;
+    ratedMovies.set(`${id}`, rate);
+    this.setState(() => ({
+      ratedMovies,
+    }));
+  };
 
-  return (
-    <SessionContext.Provider
-      value={{
-        guestSessionData: state.guestSessionData,
-        getRateById,
-        setRateById,
-      }}
-    >
-      {children}
-    </SessionContext.Provider>
-  )
+  render() {
+    const { children } = this.props;
+    const { guestSessionData } = this.state;
+
+    return (
+      <SessionContext.Provider
+        value={{
+          guestSessionData,
+          getRateById: this.getRateById,
+          setRateById: this.setRateById,
+        }}
+      >
+        {children}
+      </SessionContext.Provider>
+    );
+  }
 }
 
-export const SessionConsumer = SessionContext.Consumer
-export default SessionProvider
+export const SessionConsumer = SessionContext.Consumer;
+
+export default SessionProvider;

@@ -123,8 +123,11 @@ const fetchRatedMoviesData = async (
   };
 
   try {
+    // guest session existence try
     if (!guestSessionData) throw new Error("Guest session wasnt found");
+
     const { guest_session_id: sessionId, success } = guestSessionData;
+    // guest session server success try
     if (!success) throw new Error("Unsuccesfull guest session from server!");
 
     const baseRatedURL = new URL(

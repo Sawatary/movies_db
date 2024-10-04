@@ -1,136 +1,146 @@
-import {
-  createContext,
-  ReactElement,
-  useEffect,
-  useState,
-  useCallback,
-} from 'react'
-import { debounce } from 'lodash'
+import { Component, createContext, ReactElement } from "react";
 
 import {
   fetchMoviesData,
   fetchTrendMovies,
   MoviesDataType,
-} from '../api/movies'
+} from "../api/movies";
+import { debounce } from "lodash";
 
 type MoviesStateType = {
-  movieData: MoviesDataType | null
-  error: Error | null
-  loading: boolean
-  searchValue: string
-  page: number
-}
+  movieData: MoviesDataType | null;
+  error: Error | null;
+  loading: boolean;
+  searchValue: string;
+  page: number;
+};
 
 const initState: MoviesStateType = {
   movieData: null,
   error: null,
   loading: true,
-  searchValue: '',
+  searchValue: "",
   page: 1,
-}
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const debouncedFunction = debounce(() => {}, 1500);
 
 type MovieContextType = {
-  movieContext: MoviesStateType
-  debouncedSetSearch: (e: React.ChangeEvent<HTMLInputElement>) => void
-  setPage: (value: number) => void
-}
+  movieContext: MoviesStateType;
+  debouncedSetSearch: typeof debouncedFunction;
+  setPage: (value: number) => void;
+};
 
 const MovieContext = createContext<MovieContextType>({
   movieContext: initState,
-  debouncedSetSearch: () => {},
-  setPage: () => {},
-})
+  debouncedSetSearch: debounce(() => {}, 1500),
+  setPage: (value) => value,
+});
 
-type ChildrenType = { children: ReactElement | ReactElement[] | undefined }
+type ChildrenType = { children: ReactElement | ReactElement[] | undefined };
 
-const MovieDataProvider = ({ children }: ChildrenType) => {
-  const [state, setState] = useState<MoviesStateType>(initState)
+class MovieDataProvider extends Component<ChildrenType, MoviesStateType> {
+  debouncedSetSearch = debounce((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.value.trim())
+      this.setState(() => ({
+        searchValue: e.target.value,
+        loading: true,
+      }));
+  }, 1500);
 
-  const updateTrendMovies = useCallback(async (page = 1) => {
-    try {
-      const data = await fetchTrendMovies(page)
-      setState((prevState) => ({
-        ...prevState,
-        movieData: data,
-        error: null,
-        loading: false,
-      }))
-    } catch (err) {
-      if (err instanceof Error) {
-        setState((prevState) => ({
-          ...prevState,
-          error: err,
-          loading: false,
-        }))
-      }
-    }
-  }, [])
+  constructor(props: ChildrenType) {
+    super(props);
 
-  const updateFoundMovies = useCallback(async (query: string, page: number) => {
-    try {
-      const data = await fetchMoviesData(query, page)
-      setState((prevState) => ({
-        ...prevState,
-        movieData: data,
-        error: null,
-        loading: false,
-      }))
-    } catch (err) {
-      if (err instanceof Error) {
-        setState((prevState) => ({
-          ...prevState,
-          error: err,
-          loading: false,
-        }))
-      }
-    }
-  }, [])
-
-  const debouncedSetSearch = useCallback(
-    debounce((e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value.trim()
-      if (value) {
-        setState((prevState) => ({
-          ...prevState,
-          searchValue: value,
-          loading: true,
-        }))
-      }
-    }, 1500),
-    []
-  )
-
-  const setPage = (value: number) => {
-    setState((prevState) => ({
-      ...prevState,
-      page: value,
-      loading: true,
-    }))
+    this.state = initState;
   }
 
-  useEffect(() => {
-    const { searchValue, page } = state
+  componentDidMount(): void {
+    this.updateTrendMovies();
+  }
 
-    if (searchValue) {
-      updateFoundMovies(searchValue, page)
-    } else {
-      updateTrendMovies(page)
+  componentDidUpdate(
+    _prevProps: object,
+    prevState: Readonly<MoviesStateType>,
+  ): void {
+    const { searchValue, page } = this.state;
+
+    if (
+      (prevState.searchValue !== searchValue && searchValue.trim()) ||
+      (searchValue.trim() && prevState.page !== page)
+    ) {
+      this.updateFoundMovies(searchValue, page);
     }
-  }, [state.searchValue, state.page, updateFoundMovies, updateTrendMovies])
 
-  return (
-    <MovieContext.Provider
-      value={{
-        movieContext: state,
-        debouncedSetSearch,
-        setPage,
-      }}
-    >
-      {children}
-    </MovieContext.Provider>
-  )
+    if (
+      (!searchValue.trim() && prevState.page !== page) ||
+      (prevState.searchValue !== searchValue && !searchValue.trim())
+    ) {
+      this.updateTrendMovies(page);
+    }
+  }
+
+  setPage = (value: number) => {
+    this.setState(() => ({
+      page: value,
+      loading: true,
+    }));
+  };
+
+  updateTrendMovies(p?: number) {
+    fetchTrendMovies(p)
+      .then((data) => {
+        this.setState(() => ({
+          movieData: data,
+          error: null,
+          loading: false,
+        }));
+      })
+      .catch((err) => {
+        if (err instanceof Error)
+          this.setState(() => ({
+            error: err,
+            loading: false,
+          }));
+      });
+  }
+
+  updateFoundMovies(q: string, p: number) {
+    fetchMoviesData(q, p)
+      .then((data) => {
+        this.setState(() => ({
+          movieData: data,
+          error: null,
+          loading: false,
+        }));
+      })
+      .catch((err) => {
+        if (err instanceof Error)
+          this.setState(() => ({
+            error: err,
+            loading: false,
+          }));
+      });
+  }
+
+  render() {
+    const { children } = this.props;
+    const { movieData, loading, error, page, searchValue } = this.state;
+
+    return (
+      <MovieContext.Provider
+        value={{
+          movieContext: { movieData, loading, error, page, searchValue },
+          debouncedSetSearch: this.debouncedSetSearch,
+          setPage: this.setPage,
+        }}
+      >
+        {children}
+      </MovieContext.Provider>
+    );
+  }
 }
 
-export const MovieDataConsumer = MovieContext.Consumer
+export const MovieDataConsumer = MovieContext.Consumer;
 
-export default MovieDataProvider
+export default MovieDataProvider;

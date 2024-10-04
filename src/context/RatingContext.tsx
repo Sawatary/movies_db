@@ -1,4 +1,5 @@
-import React, { createContext, useEffect, useState } from "react";
+import { Component, createContext, ReactElement } from "react";
+
 import {
   fetchRatedMoviesData,
   GuestSessionDataType,
@@ -12,61 +13,94 @@ type MoviesStateType = {
   page: number;
 };
 
+const initState: MoviesStateType = {
+  movieData: null,
+  error: null,
+  loading: true,
+  page: 1,
+};
+
 type MovieRatedContextType = {
   movieRatedContext: MoviesStateType;
   setPage: (value: number) => void;
 };
 
 const MovieRatedContext = createContext<MovieRatedContextType>({
-  movieRatedContext: { movieData: null, error: null, loading: true, page: 1 },
-  setPage: () => {},
+  movieRatedContext: initState,
+  setPage: (value) => value,
 });
 
 type ChildrenType = {
-  children: React.ReactNode;
+  children: ReactElement | ReactElement[] | undefined;
   guestSession: GuestSessionDataType | null;
 };
 
-const RatingProvider: React.FC<ChildrenType> = ({ children, guestSession }) => {
-  const [state, setState] = useState<MoviesStateType>({
-    movieData: null,
-    error: null,
-    loading: true,
-    page: 1,
-  });
+class RatingProvider extends Component<ChildrenType, MoviesStateType> {
+  constructor(props: ChildrenType) {
+    super(props);
+    this.state = initState;
+  }
 
-  const updateRatedMovies = async (page: number) => {
-    setState((prev) => ({ ...prev, loading: true }));
-    try {
-      const data = await fetchRatedMoviesData(guestSession, page);
-      setState({ movieData: data, error: null, loading: false, page });
-    } catch (err) {
-      setState((prev) => ({
-        ...prev,
-        error: err instanceof Error ? err : new Error(String(err)),
-        loading: false,
-      }));
-    }
+  componentDidMount(): void {
+    const { guestSession } = this.props;
+    this.updateRatedMovies(guestSession);
+  }
+
+  componentDidUpdate(
+    _prevProps: object,
+    prevState: Readonly<MoviesStateType>,
+  ): void {
+    const { guestSession } = this.props;
+    const { page } = this.state;
+    if (prevState.page !== page) this.updateRatedMovies(guestSession, page);
+  }
+
+  setPage = (value: number) => {
+    this.setState(() => ({
+      page: value,
+      loading: true,
+    }));
   };
 
-  useEffect(() => {
-    console.log("Guest session changed:", guestSession);
-    if (guestSession) {
-      updateRatedMovies(state.page);
-    }
-  }, [guestSession, state.page]);
+  updateRatedMovies(guestSession: GuestSessionDataType | null, p?: number) {
+    fetchRatedMoviesData(guestSession, p)
+      .then((data) => {
+        this.setState(() => ({
+          movieData: data,
+          error: null,
+          loading: false,
+        }));
+      })
+      .catch((err) => {
+        if (err instanceof Error)
+          this.setState(() => ({
+            error: err,
+            loading: false,
+          }));
+      });
+  }
 
-  const setPage = (page: number) => {
-    setState((prev) => ({ ...prev, page }));
-    updateRatedMovies(page);
-  };
+  render() {
+    const { children } = this.props;
+    const { movieData, loading, error, page } = this.state;
 
-  return (
-    <MovieRatedContext.Provider value={{ movieRatedContext: state, setPage }}>
-      {children}
-    </MovieRatedContext.Provider>
-  );
-};
+    return (
+      <MovieRatedContext.Provider
+        value={{
+          movieRatedContext: {
+            movieData,
+            loading,
+            error,
+            page,
+          },
+          setPage: this.setPage,
+        }}
+      >
+        {children}
+      </MovieRatedContext.Provider>
+    );
+  }
+}
 
 export const MovieRatedConsumer = MovieRatedContext.Consumer;
 
