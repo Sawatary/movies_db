@@ -1,11 +1,11 @@
 import { Component, createContext, ReactElement } from "react";
+import { debounce } from "lodash";
 
 import {
   fetchMoviesData,
   fetchTrendMovies,
   MoviesDataType,
 } from "../api/movies";
-import { debounce } from "lodash";
 
 type MoviesStateType = {
   movieData: MoviesDataType | null;
@@ -24,7 +24,10 @@ const initState: MoviesStateType = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const debouncedFunction = debounce(() => {}, 1500);
+const debouncedFunction = debounce(
+  (_e: React.ChangeEvent<HTMLInputElement>) => {},
+  1500,
+);
 
 type MovieContextType = {
   movieContext: MoviesStateType;
