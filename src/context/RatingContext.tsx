@@ -65,6 +65,7 @@ class RatingProvider extends Component<ChildrenType, MoviesStateType> {
   updateRatedMovies(guestSession: GuestSessionDataType | null, p?: number) {
     fetchRatedMoviesData(guestSession, p)
       .then((data) => {
+        console.log(data);
         this.setState(() => ({
           movieData: data,
           error: null,
@@ -72,6 +73,7 @@ class RatingProvider extends Component<ChildrenType, MoviesStateType> {
         }));
       })
       .catch((err) => {
+        console.error(err);
         if (err instanceof Error)
           this.setState(() => ({
             error: err,

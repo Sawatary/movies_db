@@ -43,7 +43,7 @@ const Search = () => {
                 defaultCurrent={page}
                 total={
                   Number(movieData?.total_pages) > 500
-                    ? 200
+                    ? 500
                     : movieData?.total_pages
                 }
                 align="center"

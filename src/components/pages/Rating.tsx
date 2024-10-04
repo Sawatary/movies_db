@@ -1,10 +1,10 @@
-import { List, Pagination } from 'antd'
+import { List, Pagination } from "antd";
 
-import { MovieRatedConsumer } from '../../context/RatingContext'
-import LoadingPage from '../LoadingPage'
-import MovieCard from '../MovieCard'
+import Skelet from "../Skelet";
+import { MovieRatedConsumer } from "../../context/RatingContext";
+import MovieCard from "../MovieCard";
 
-const Rated = () => {
+function RatedTab() {
   return (
     <MovieRatedConsumer>
       {({ setPage, movieRatedContext: { movieData, loading, page } }) => {
@@ -18,8 +18,9 @@ const Rated = () => {
                 renderItem={(item) => <MovieCard movie={item} />}
               />
             ) : (
-              <LoadingPage />
+              <Skelet />
             )}
+
             <Pagination
               onChange={setPage}
               showSizeChanger={false}
@@ -33,10 +34,10 @@ const Rated = () => {
               align="center"
             />
           </>
-        )
+        );
       }}
     </MovieRatedConsumer>
-  )
+  );
 }
 
-export default Rated
+export default RatedTab;
