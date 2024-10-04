@@ -1,13 +1,13 @@
 import { Empty, Tabs } from "antd";
 
 import MovieDataProvider from "../context/MoviesContext";
-import RatingProvider from "../context/RatingContext";
 import SessionProvider, { SessionConsumer } from "../context/SessionContext";
+import RatingProvider from "../context/RatingContext";
 
-import RatedTab from "./pages/Rating";
 import SearchTab from "./pages/Search";
+import RatedTab from "./pages/Rating";
 
-const Movies = () => {
+export default function Movies() {
   const ratedTab = (
     <SessionConsumer>
       {({ guestSessionData }) => (
@@ -50,6 +50,4 @@ const Movies = () => {
       />
     </SessionProvider>
   );
-};
-
-export default Movies;
+}

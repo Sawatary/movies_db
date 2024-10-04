@@ -41,7 +41,7 @@ const options = {
     accept: "application/json",
     "Cache-Control": "public, max-age=3600",
     Authorization:
-      "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJmZDcyNWNkY2NhN2ViMTA0NWQ1MmM2ZWNkMzBlOTVlNiIsIm5iZiI6MTcyMTY0ODQxMS4wMzY2MTQsInN1YiI6IjY2OWU0MjJmNzk0ZDFkZjgwYzUwMjI5YiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.99FKbHo8O4WuTdBGB2C8kdFJS5T9PzMXxJNCZRLlZ-E",
+      "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIyNTAxZTBhODU1ZTZhZjgyNmI2YTQ4NTE2MjIyMDk5YSIsIm5iZiI6MTcyODA4MjA0OS42MDA3MTUsInN1YiI6IjY2ZTg0Y2E2OWRmYmJkZjBlNmQwMTAwMyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.flmWrrsFwHqwpIKgAdA7c8j1vPRYtHK_ImTroYB04UU",
   },
 };
 
@@ -123,11 +123,8 @@ const fetchRatedMoviesData = async (
   };
 
   try {
-    // guest session existence try
     if (!guestSessionData) throw new Error("Guest session wasnt found");
-
     const { guest_session_id: sessionId, success } = guestSessionData;
-    // guest session server success try
     if (!success) throw new Error("Unsuccesfull guest session from server!");
 
     const baseRatedURL = new URL(
@@ -140,7 +137,7 @@ const fetchRatedMoviesData = async (
       headers: {
         accept: "application/json",
         Authorization:
-          "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJmZDcyNWNkY2NhN2ViMTA0NWQ1MmM2ZWNkMzBlOTVlNiIsIm5iZiI6MTcyMjUwNTk4Ny4xMTQ5NzEsInN1YiI6IjY2OWU0MjJmNzk0ZDFkZjgwYzUwMjI5YiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.Accj3iZ0aXgp92JYPkeeeQtQH3CDVqPKiV0k0IrfUJQ",
+          "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIyNTAxZTBhODU1ZTZhZjgyNmI2YTQ4NTE2MjIyMDk5YSIsIm5iZiI6MTcyODA4MjA0OS42MDA3MTUsInN1YiI6IjY2ZTg0Y2E2OWRmYmJkZjBlNmQwMTAwMyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.flmWrrsFwHqwpIKgAdA7c8j1vPRYtHK_ImTroYB04UU",
       },
     };
     const res = await fetch(newURL, opt);

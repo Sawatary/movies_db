@@ -1,5 +1,6 @@
 import { List, Pagination } from "antd";
 
+import ErrorMessage from "../Error";
 import Skelet from "../Skelet";
 import { MovieRatedConsumer } from "../../context/RatingContext";
 import MovieCard from "../MovieCard";
@@ -7,7 +8,12 @@ import MovieCard from "../MovieCard";
 function RatedTab() {
   return (
     <MovieRatedConsumer>
-      {({ setPage, movieRatedContext: { movieData, loading, page } }) => {
+      {({
+        setPage,
+        movieRatedContext: { movieData, loading, error, page },
+      }) => {
+        if (error) return <ErrorMessage message={error.message} />;
+
         return (
           <>
             {!loading ? (

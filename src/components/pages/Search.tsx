@@ -1,17 +1,19 @@
 import { Flex, Input, List, Pagination } from "antd";
 
-import { MovieDataConsumer } from "../../context/MoviesContext";
-import LoadingPage from "../LoadingPage";
+import ErrorMessage from "../Error";
 import MovieCard from "../MovieCard";
+import Skelet from "../Skelet";
+import { MovieDataConsumer } from "../../context/MoviesContext";
 
-const Search = () => {
+function SearchTab() {
   return (
     <MovieDataConsumer>
       {({
         debouncedSetSearch,
         setPage,
-        movieContext: { movieData, loading, page },
+        movieContext: { movieData, loading, error, page },
       }) => {
+        if (error) return <ErrorMessage message={error.message} />;
         return (
           <>
             <Flex vertical gap={16} style={{ marginBottom: "1rem" }}>
@@ -32,7 +34,7 @@ const Search = () => {
                 renderItem={(item) => <MovieCard movie={item} />}
               />
             ) : (
-              <LoadingPage />
+              <Skelet />
             )}
 
             {!loading ? (
@@ -56,6 +58,6 @@ const Search = () => {
       }}
     </MovieDataConsumer>
   );
-};
+}
 
-export default Search;
+export default SearchTab;
