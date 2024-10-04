@@ -1,15 +1,29 @@
-import { List, Pagination } from "antd";
+import { Flex, Input, List, Pagination } from "antd";
 
-import { MovieRatedConsumer } from "../../context/RatingContext";
+import { MovieDataConsumer } from "../../context/MoviesContext";
 import LoadingPage from "../LoadingPage";
 import MovieCard from "../MovieCard";
 
-const Rated = () => {
+const Search = () => {
   return (
-    <MovieRatedConsumer>
-      {({ setPage, movieRatedContext: { movieData, loading, page } }) => {
+    <MovieDataConsumer>
+      {({
+        debouncedSetSearch,
+        setPage,
+        movieContext: { movieData, loading, page },
+      }) => {
         return (
           <>
+            <Flex vertical gap={16} style={{ marginBottom: "1rem" }}>
+              <Input
+                placeholder="Type Movie title here..."
+                style={{ borderRadius: 2 }}
+                onChange={(e) => {
+                  debouncedSetSearch(e);
+                }}
+              />
+            </Flex>
+
             {!loading ? (
               <List
                 itemLayout="vertical"
@@ -20,23 +34,28 @@ const Rated = () => {
             ) : (
               <LoadingPage />
             )}
-            <Pagination
-              onChange={setPage}
-              showSizeChanger={false}
-              defaultPageSize={1}
-              defaultCurrent={page}
-              total={
-                Number(movieData?.total_pages) > 500
-                  ? 500
-                  : movieData?.total_pages
-              }
-              align="center"
-            />
+
+            {!loading ? (
+              <Pagination
+                onChange={setPage}
+                showSizeChanger={false}
+                defaultPageSize={1}
+                defaultCurrent={page}
+                total={
+                  Number(movieData?.total_pages) > 500
+                    ? 200
+                    : movieData?.total_pages
+                }
+                align="center"
+              />
+            ) : (
+              false
+            )}
           </>
         );
       }}
-    </MovieRatedConsumer>
+    </MovieDataConsumer>
   );
 };
 
-export default Rated;
+export default Search;
